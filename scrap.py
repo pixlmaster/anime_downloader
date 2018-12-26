@@ -12,47 +12,69 @@ from selenium.common.exceptions import TimeoutException, WebDriverException
 from selenium.webdriver.firefox.options import Options
 import requests
 
-#driver=webdriver.Firefox()
-_browser_profile = webdriver.FirefoxProfile()
-_browser_profile.set_preference("dom.webnotifications.enabled", False)
-_browser_profile.set_preference("browser.download.folderList", 2)
-_browser_profile.set_preference('browser.download.dir', '/Downloads')
-_browser_profile.set_preference('browser.helperApps.neverAsk.saveToDisk', 'video/mp4')
-options = Options()
-options.add_argument("--headless")
-#driver=webdriver.Firefox(firefox_profile=_browser_profile)
-driver=webdriver.Firefox(firefox_profile=_browser_profile,options=options)
+kissanime_login_url="https://kissanime.ru/Login"
+kissanime_base_url="https://kissanime.ru"
+kissanime_main_url=kissanime_base_url+"/"
+user_name="testkgp"
+user_password="qwertyuiop"
 
-driver.get("https://kissanime.ru/Login")
-WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.ID,"username")))
-user=driver.find_element_by_id("username")
-print(user)
-user.send_keys("testkgp")
-password=driver.find_element_by_id("password")
-password.send_keys("qwertyuiop")
-login_button=driver.find_element_by_id("btnSubmit")
-login_button.click()
+def browser_init():
+	_browser_profile = webdriver.FirefoxProfile()
+	_browser_profile.set_preference("dom.webnotifications.enabled", False)
+	_browser_profile.set_preference("browser.download.folderList", 2)
+	_browser_profile.set_preference('browser.download.dir', '/Downloads')
+	_browser_profile.set_preference('browser.helperApps.neverAsk.saveToDisk', 'video/mp4')
+	options = Options()
+	options.add_argument("--headless")
+
+	driver=webdriver.Firefox(firefox_profile=_browser_profile)
+	#driver=webdriver.Firefox(firefox_profile=_browser_profile,options=options)
+
+	return driver
+
+def site_login(browser):
+	browser.get(kissanime_login_url)
+	WebDriverWait(browser, 30).until(EC.presence_of_element_located((By.ID,"username")))
+	
+	user=browser.find_element_by_id("username")
+	user.send_keys(user_name)
+	
+	password=browser.find_element_by_id("password")
+	password.send_keys(user_password)
+	
+	login_button=browser.find_element_by_id("btnSubmit")
+	login_button.click()
+
+def site_search(browser):
+	browser.get(kissanime_main_url)
+
+	WebDriverWait(browser, 30)
+
+	main_window=browser.current_window_handle
+
+	WebDriverWait(browser,30).until(EC.presence_of_element_located((By.ID,"keyword")))
+	WebDriverWait(browser,30).until(EC.visibility_of_element_located((By.ID,"keyword")))
+	inputelement=browser.find_element_by_id("keyword")
+
+	inputelement.send_keys("boruto")
+
+	searchButton = browser.find_element_by_id("imgSearch")
+	searchButton.click()
+
+	while browser.current_url != "https://kissanime.ru/Search/Anime":
+	     ActionChains(browser).send_keys(Keys.CONTROL + 'w').perform()
+
+	browser.switch_to_window(main_window)
+
+	return browser
 
 
-driver.get("https://kissanime.ru/")
+driver=browser_init()
 
-WebDriverWait(driver, 30)
+site_login(driver)
 
-main_window=driver.current_window_handle
+driver=site_search(driver)
 
-WebDriverWait(driver,30).until(EC.presence_of_element_located((By.ID,"keyword")))
-WebDriverWait(driver,30).until(EC.visibility_of_element_located((By.ID,"keyword")))
-inputelement=driver.find_element_by_id("keyword")
-
-inputelement.send_keys("boruto")
-
-searchButton = driver.find_element_by_id("imgSearch")
-searchButton.click()
-
-while driver.current_url != "https://kissanime.ru/Search/Anime":
-     ActionChains(driver).send_keys(Keys.CONTROL + 'w').perform()
-
-driver.switch_to_window(main_window)
 
 soup= bs(driver.page_source, 'html.parser')
 
