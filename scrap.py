@@ -166,7 +166,6 @@ try:
 
 except Exception as e:
 	print("an error occurred")
-	print(e)
 finally:
 	driver.quit()
 
